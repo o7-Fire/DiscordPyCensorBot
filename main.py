@@ -1,7 +1,5 @@
 import traceback
-
 import keep_alive
-
 keep_alive.keep_alive()
 import os
 import discord
@@ -43,17 +41,10 @@ censored_words = ["suck me", "suck ne", "masterbat",
                   "hentai", "henthai", "hxntai", "hormy", "fuck ne", "masturbat",
                   "sex", "porn", "daddy", "porm", "fuck me", "anal", "buttplug",
                   ":woozy_face:", ":flushed:", ":drooling_face:", "rape"]  # 343591759332245505
-whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634, 343591759332245505]
+whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634]
 urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4))")
+#just ten more year we solved world hunger
 
-reportCombine: dict = {
-    "Drawing": {"Hentai": "Anime", "Sexy": "Artificial Provocative", "Neutral": "Digital Drawing"},
-    "Neutral": {"Drawing": "Digital", "Sexy": "Naturally Provocative", "Porn": "Disturbing",
-                "Hentai": "Seductive Anime"},
-    "Sexy": {"Neutral": "Sexually Provocative", "Porn": "Seductive Porn"},
-    "Porn": {"Sexy": "Softcore Porn", "Hentai": "Hentai Clips"},
-    "Hentai": {"Porn": "18+ Doujin", "Drawing": "Hentai R34"}
-}
 
 
 @client.event
@@ -62,16 +53,34 @@ async def on_ready():
 
 
 def getClassification(img: str):
-    content = urllib.request.urlopen(o7API + '//api/json/graphical/classification/' + img).read()
+    content = urllib.request.urlopen(o7API + '//api/json/graphical/classification/' + img).read()#wow retard use double slash
     report = json.loads(content)
-    reportActual: dict = {}
+    reportActual: dict = {} 
     if type(report) is dict:
         return report["error"]
     for fe in report:
         reportActual[fe['className']] = float(fe['probability'])
     return reportActual
 
+def checkvideotype(name, prefix):
+  filename = name[-len(prefix)-1:]
+  if filename==f'.{prefix}':
+    return True
 
+async def WarnUserVideoType(message, sta = {}): 
+  att = message.attachments[0].filename
+  if checkvideotype(att, 'mp4') or checkvideotype(att, 'webm'):
+    await message.channel.send(
+                "<@" + str(message.author.id) + "> bot detected that the attachment u posted is nsfw (definitely)\nAttachment type: " + "video\n" + sta[0] +
+                sta[1] + sta[2] + sta[3])
+  if checkvideotype(att, 'gif'): 
+    await message.channel.send(
+                "<@" + str(message.author.id) + "> bot detected that the attachment u posted is nsfw (definitely)\nAttachment type: " + "gif\n" + sta[0] +
+                sta[1] + sta[2] + sta[3])
+  elif checkvideotype(att, 'png') or checkvideotype(att, 'jpg'):
+    await message.channel.send(
+                "<@" + str(message.author.id) + "> bot detected that the attachment u posted is nsfw (definitely)\nAttachment type: " + "image\n" + sta[0] +
+                sta[1] + sta[2] + sta[3])
 def aboveLimit(val: float):
     return val > threshold
 
@@ -113,49 +122,33 @@ async def checkVisualF(message, img):
                 await message.channel.send(contents)
             return True
         ##Test shit
+        """
         top2: list = []
         top2Value: list = []
         top2Val: float
         top2Name: str = ""
         cont: list = sorted(contents.items(), key=operator.itemgetter(1), reverse=True)
         for i in range(2):
-            top2.append(cont[i][0])
-        for i in range(2):
-            top2Value.append(cont[i][1])
-        top2Val = top2Value[0] + top2Value[1]
-        contents["BorderlineHentai"] = (
-                contents["Drawing"] * contents["Hentai"] * contents["Hentai"] / contents["Neutral"])
+         #   top2.append(cont[i][0])
+        #for i in range(2):
+         #   top2Value.append(cont[i][1])
+        #top2Val = top2Value[0] + top2Value[1]
+        #contents["BorderlineHentai"] = (
+        #        contents["Drawing"] * contents["Hentai"] * contents["Hentai"] / contents["Neutral"])
         # neutralize(contents, "Hentai", "BorderlineHentai")
-        contents["Digital"] = contents["Porn"] / 1.5 + contents["Neutral"] / 2 + contents["Drawing"] / 1.3
+        #contents["Digital"] = contents["Porn"] / 1.5 + contents["Neutral"] / 2 + contents["Drawing"] / 1.3
         # neutralize(contents, "Neutral", "Digital")
-        contents["Anime"] = (contents["Drawing"] - contents["Hentai"])
+        #contents["Anime"] = (contents["Drawing"] - contents["Hentai"])
         # neutralize(contents, "Hentai", "BorderlineHentai")
-        contents["UntrustedDrawing"] = (
-                (contents["Sexy"] + contents["Porn"] + contents["Hentai"] + contents["Drawing"]) / 1.5 - contents[
-            "Neutral"])
-        neutralize(contents, "Sexy", "UntrustedDrawing")
+        #contents["UntrustedDrawing"] = (
+        #        (contents["Sexy"] + contents["Porn"] + contents["Hentai"] + contents["Drawing"]) / 1.5 - contents[
+         #   "Neutral"])
+        #neutralize(contents, "Sexy", "UntrustedDrawing")
+        """
         sortedReport: list = sorted(contents.items(), key=operator.itemgetter(1), reverse=True)
         # print(sortedReport)
-        try:
-            top2Name = reportCombine[top2[0]][top2[1]]
-        except Exception:
-            print("Not implemented: " + str(top2))
-        if debug:
+        if debug:##Print Details
             ss: str = ""
-            ss = "```\n"
-            ss = ss + "URL:" + img + "\n"
-            ss = ss + "Top 2\n"
-            ss = ss + top2Name + "?\n"
-            ss = ss + top2[0] + "&" + top2[1] + "\n"
-            ss = ss + str(top2Value[0]) + "+" + str(top2Value[1]) + "\n"
-            ss = ss + str((top2Value[0] + top2Value[1])) + "\n"
-            ss = ss + str(top2Value[0]) + "-" + str(top2Value[1]) + "\n"
-            ss = ss + str((top2Value[0] - top2Value[1])) + "\n"
-            ss = ss + str(top2Value[0]) + "/" + str(top2Value[1]) + "\n"
-            ss = ss + str((top2Value[0] / top2Value[1])) + "\n"
-            ss = ss + str(top2Value[0]) + "*" + str(top2Value[1]) + "\n"
-            ss = ss + str((top2Value[0] * top2Value[1])) + "\n"
-            ss = ss + "```"
             for subject in sortedReport:  # mfw subject is tuple
                 name: str = subject[0]
                 if subject[1] > threshold:
@@ -165,49 +158,42 @@ async def checkVisualF(message, img):
 
         for sf in safeIndex:
             if contents[sf] > thresholdMaximizer:
-                return False
+                return False #it prints out bot detected that the image u posted is nsfw (definitely) even though its video, not image
         ##Moderate by itzbenz
-        if contents["BorderlineHentai"] > threshold:
-            await message.delete()
-            await message.channel.send("<@" + str(message.author.id) + "> Borderline Hentai is not allowed")
-            return True
-        if contents["Anime"] > threshold and debug:  # mfw use distance
-            await message.channel.send("<@" + str(message.author.id) + "> is this anime ?")
-        if contents["Digital"] > threshold and debug:
+        #if contents["BorderlineHentai"] > threshold:
+        #    await message.delete()
+        #    await message.channel.send("<@" + str(message.author.id) + "> Borderline Hentai is not allowed")
+        #    return True
+        #if contents["Anime"] > threshold and debug:  # mfw use distance
+         #   await message.channel.send("<@" + str(message.author.id) + "> is this anime ?")
+        #if contents["Digital"] > threshold and debug:
             # await message.delete()
-            await message.channel.send("<@" + str(message.author.id) + "> a digital generated image ?")
+         #   await message.channel.send("<@" + str(message.author.id) + "> a digital generated image ?")
         # if contents["TransparentPorn"] > threshold:
         #     await message.delete()
         #     await message.channel.send("<@" + str(message.author.id) + "> Shady porn")
         #    return
         # report = json.loads(contents)
         # quick use contents['Drawing']/api/json/graphical/classification/
-
+        
         ##Nexity shenanigans
-        std = subprocess.run(['curl', 'https://o7-api.glitch.me//api/json/graphical/classification/' + img],
-                             capture_output=True, text=True)
-        sta = str(std.stdout).split(",")
-        checkstring = sta[0] + sta[1] + sta[2] + sta[3]
-        if "Sexy" in sta[0] or "Porn" in sta[0] or "Hentai" in sta[0]:
-            await message.delete()
-            await message.channel.send(
-                "<@" + str(message.author.id) + "> bot detected that the image u posted is nsfw (definitely)" + sta[0] +
-                sta[1] + sta[2] + sta[3])
-        elif "Sexy" in sta[2] or "Porn" in sta[2] or "Hentai" in sta[2]:
-            a = float(sta[1].replace('"probability":', '').replace('}', ''))
-            b = float(sta[3].replace('"probability":', '').replace('}', ''))
-            if b > 0.25:
-                await message.delete()
-                await message.channel.send(
-                    "<@" + str(message.author.id) + "> bot detected that the image u posted is nsfw (definitely)" + sta[
-                        0] + sta[1] + sta[2] + sta[3])
-                return True
-            else:
-                await message.channel.send(
-                    "<@" + str(message.author.id) + "> bot detected that the image u posted is nsfw (not sure)\n" + sta[
-                        0] + sta[1] + sta[2] + sta[
-                        3] + '\ndifference: ' + str(a - b))
-                return True
+        #std = subprocess.run(['curl', 'https://o7-api.glitch.me//api/json/graphical/classification/' + img],
+         #                    capture_output=True, text=True)
+        #sta = str(std.stdout).split(",")
+        ##checkstring = sta[0] + sta[1] + sta[2] + sta[3]
+        #if "Sexy" in sta[0] or "Porn" in sta[0] or "Hentai" in sta[0]:
+        #    await message.delete()
+        #    await WarnUserVideoType(message, sta)
+        #elif "Sexy" in sta[2] or "Porn" in sta[2] or "Hentai" in sta[2]:
+         #   a = float(sta[1].replace('"probability":', '').replace('}', ''))
+         #   b = float(sta[3].replace('"probability":', '').replace('}', ''))
+         #   if b > 0.25:
+         #       await message.delete()
+          #      await WarnUserVideoType(message, sta)
+         ##       return True
+        #    else:
+         #       await WarnUserVideoType(message, sta)
+         #       return True
         return False
     except Exception as e:
         print("no image found")
@@ -260,6 +246,8 @@ async def checkSpam(message):
 @client.event
 async def on_message(message):
     global isSpamAllowed
+    if message.author.id == 0:
+      await message.delete()
     if message.author.bot:
         return
         # DONT DELETE
