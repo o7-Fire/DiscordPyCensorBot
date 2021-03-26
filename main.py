@@ -48,7 +48,8 @@ urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif)
 
 reportCombine: dict = {
     "Drawing": {"Hentai": "Anime", "Sexy": "Artificial Provocative", "Neutral": "Digital Drawing"},
-    "Neutral": {"Drawing": "Digital", "Sexy": "Naturally Provocative", "Porn": "Disturbing"},
+    "Neutral": {"Drawing": "Digital", "Sexy": "Naturally Provocative", "Porn": "Disturbing",
+                "Hentai": "Seductive Anime"},
     "Sexy": {"Neutral": "Sexually Provocative", "Porn": "Seductive Porn"},
     "Porn": {"Sexy": "Softcore Porn", "Hentai": "Hentai Clips"},
     "Hentai": {"Porn": "18+ Doujin", "Drawing": "Hentai R34"}
@@ -122,7 +123,7 @@ async def checkVisualF(message, img):
             top2Value.append(cont[i][1])
         top2Val = top2Value[0] + top2Value[1]
         contents["BorderlineHentai"] = (
-                    contents["Drawing"] * contents["Hentai"] * contents["Hentai"] / contents["Neutral"])
+                contents["Drawing"] * contents["Hentai"] * contents["Hentai"] / contents["Neutral"])
         # neutralize(contents, "Hentai", "BorderlineHentai")
         contents["Digital"] = contents["Porn"] / 1.5 + contents["Neutral"] / 2 + contents["Drawing"] / 1.3
         # neutralize(contents, "Neutral", "Digital")
@@ -139,9 +140,9 @@ async def checkVisualF(message, img):
         except Exception:
             print("Not implemented: " + str(top2))
         if debug:
-            ## +  +  + str(top2Value[0]) + "-" + str(top2Value[1]) + "\n" + str((top2Value[0] - (top2Value[1]) +  "\n```"
             ss: str = ""
             ss = "```\n"
+            ss = ss + "URL:" + img + "\n"
             ss = ss + "Top 2\n"
             ss = ss + top2Name + "?\n"
             ss = ss + top2[0] + "&" + top2[1] + "\n"
@@ -244,9 +245,9 @@ async def checkSpam(message):
     try:
         if message.content.lower() == spam[message.author.id]:
             await message.delete()
-            #channel = await message.author.create_dm()
-            #await channel.send("stop spamming")
-            #do i need to block the bots
+            # channel = await message.author.create_dm()
+            # await channel.send("stop spamming")
+            # do i need to block the bots
             return True
     except:
         print("oh noes")
