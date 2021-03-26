@@ -108,8 +108,9 @@ async def checkVisualF(message, img):
         ##get from api
         debug = "debug" in message.content
         contents = getClassification(img)  # ignorant is a bliss
-        if not type(contents) is dict and debug:
-            await message.channel.send(contents)
+        if not type(contents) is dict:
+            if debug:
+                await message.channel.send(contents)
             return True
         ##Test shit
         top2: list = []
