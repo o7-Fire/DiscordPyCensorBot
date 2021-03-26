@@ -44,7 +44,7 @@ censored_words = ["suck me", "suck ne", "masterbat",
                   "sex", "porn", "daddy", "porm", "fuck me", "anal", "buttplug",
                   ":woozy_face:", ":flushed:", ":drooling_face:", "rape"]  # 343591759332245505
 whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634, 343591759332245505]
-urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif))")
+urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4))")
 
 reportCombine: dict = {
     "Drawing": {"Hentai": "Anime", "Sexy": "Artificial Provocative", "Neutral": "Digital Drawing"},
@@ -62,7 +62,7 @@ async def on_ready():
 
 
 def getClassification(img: str):
-    content = urllib.request.urlopen(o7API + '/api/json/graphical/classification/' + img).read()
+    content = urllib.request.urlopen(o7API + '//api/json/graphical/classification/' + img).read()
     report = json.loads(content)
     reportActual: dict = {}
     if type(report) is dict:
@@ -181,10 +181,10 @@ async def checkVisualF(message, img):
         #     await message.channel.send("<@" + str(message.author.id) + "> Shady porn")
         #    return
         # report = json.loads(contents)
-        # quick use contents['Drawing']
+        # quick use contents['Drawing']/api/json/graphical/classification/
 
         ##Nexity shenanigans
-        std = subprocess.run(['curl', 'https://o7-api.glitch.me/api/json/graphical/classification/' + img],
+        std = subprocess.run(['curl', 'https://o7-api.glitch.me//api/json/graphical/classification/' + img],
                              capture_output=True, text=True)
         sta = str(std.stdout).split(",")
         checkstring = sta[0] + sta[1] + sta[2] + sta[3]
