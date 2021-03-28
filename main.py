@@ -40,7 +40,7 @@ o7API = "https://o7-api.glitch.me"  # choose your api
 client = discord.Client()  # finally migrated to o7inc.ddns.net api
 spam = {}
 maxhandleReadableContent = 0.25  # 0 - 1. read async def handleReadableContent
-threshold = 0.5  # anything higher than this get vetoed
+threshold = 0.6  # anything higher than this get vetoed
 thresholdMinimizer = 0.25  # to sum up with other value
 thresholdNeutralizer = 0.017  # round to 0 automatically
 thresholdMaximizer = 0.81  # if the index above this and is safe dont delete
@@ -65,15 +65,16 @@ def getClassification(img: str):
     content = keep_alive.fetch(o7API + '/api/json/graphical/classification/' + img)  
     return json.loads(content)
 
-#modern problems require modern solution
+#weeb problems require weeb solution
 async def handleReadableContent(message, content: str, value: float, debug: bool):
   deleted: bool = False
   msg: str = "contained"
+  print(str(value) + " > " + str(threshold))
   if value > threshold:
     if badIndex.__contains__(content):#keep shit simple
         await message.delete()
         deleted = True
-  else: 
+  else:
     msg = "probably " + msg
   if debug: #fuck you
     msg = " is red pilled and " + msg
@@ -147,7 +148,7 @@ async def checkVisualF(message, img):
         outcome: bool = False
         for sf in contents.items():##For each item
             print(str(sf))
-            if neutralIndex.__contains__(sf[0]): continue #if this neutral continue
+            if neutralIndex.__contains__(sf[0]) and not debug: continue #if this neutral continue
             if sf[1] > threshold or (debug and sf[1]> debugThershold):
                 print("exceeded" + sf[0] + str(sf[1]))
                 await handleReadableContent(message, sf[0], sf[1], debug)#Wether to be deleted or not
