@@ -46,7 +46,7 @@ thresholdNeutralizer = 0.017  # round to 0 automatically
 thresholdMaximizer = 0.81  # if the index above this and is safe dont delete
 safeIndex = ["Neutral"]  # prevent false positive, never trust Drawing
 neutralIndex = ['Neutral']#Not worth checking
-badIndex = ["Porn", "Sexy", "Hentai"]
+badIndex = ["Porn", "Sexy", "Hentai", "Anime"]
 censored_words = ["suck me", "suck ne", "masterbat",
                   "horny", "lesbian", "bisexual", "vagina", "penis", "cock", "mastorbat",
                   "hentai", "henthai", "hxntai", "hormy", "fuck ne", "masturbat",
@@ -66,20 +66,19 @@ def getClassification(img: str):
     return json.loads(content)
 
 #modern problems require modern solution
-#ok i wont bother you
 async def handleReadableContent(message, content: str, value: float, debug: bool):
   deleted: bool = False
-  msg: str = "confirmed"
+  msg: str = "contained"
   if value > threshold:
-    if badIndex.__contains__(value):
-      await message.delete()
-      deleted = True
-  else:
-    msg = "probably"
-
-  if debug or deleted:
-    await message.channel.send('<@' + str(message.author.id) + f'> your attachment is {msg} to be ** {content} ** :  {str(value)}')
-    
+    if badIndex.__contains__(content):#keep shit simple
+        await message.delete()
+        deleted = True
+  else: 
+    msg = "probably " + msg
+  if debug: #fuck you
+    msg = " is red pilled and " + msg
+  if deleted or debug:
+      await message.channel.send('<@' + str(message.author.id) + f'> We have found that your attachment {msg} ** {content} ** :  {str(value)}')
   return deleted#get moderated
 
 #WTF HAPPENED lmao same
