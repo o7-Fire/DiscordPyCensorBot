@@ -1,10 +1,11 @@
 import traceback
+
 import keep_alive
+
 keep_alive.keep_alive()
 import os
 import discord
 import unicodedata
-import subprocess
 import json
 import sys
 import urllib.request
@@ -17,34 +18,42 @@ def restart_program():
     os.execl(python, python, *sys.argv)
 
 
+isTextCensorEnabled = 0
 isSpamAllowed = 0
 try:
     with open("spamsettings.txt", "r+") as f:
         isSpamAllowed = f.read()
 except FileNotFoundError:
-    print("gay")
+    print("hey spamsettings.txt is not found")
+try:
+    with open("textcensorsettings.txt", "r+") as f:
+        isSpamAllowed = f.read()
+except FileNotFoundError:
+    print("hey textcensorsettings.txt is not found")
+
 print("VALUE OF ISSPAMALLOWED: " + str(isSpamAllowed))
-print("fuck you faggots you niggers are gay")
+print("VALUE OF ISTEXTCENSORENABLED: " + str(isTextCensorEnabled))
 TOKEN = os.getenv('BOT_TOKEN')  # for now use glitch api since volas having problem
 ##https://o7-api.glitch.me
 ##https://o7inc.ddns.net
 o7API = "https://o7-api.glitch.me"  # choose your api
 client = discord.Client()  # finally migrated to o7inc.ddns.net api
 spam = {}
-threshold = 0.7  # anything higher than this get vetoed
+maxhandleReadableContent = 0.25  # 0 - 1. read async def handleReadableContent
+threshold = 0.5  # anything higher than this get vetoed
 thresholdMinimizer = 0.25  # to sum up with other value
 thresholdNeutralizer = 0.017  # round to 0 automatically
 thresholdMaximizer = 0.81  # if the index above this and is safe dont delete
-safeIndex = ["Neutral"]  # never trust Drawing
+safeIndex = ["Neutral"]  # prevent false positive, never trust Drawing
+neutralIndex = ['Neutral']#Not worth checking
+badIndex = ["Porn", "Sexy", "Hentai"]
 censored_words = ["suck me", "suck ne", "masterbat",
                   "horny", "lesbian", "bisexual", "vagina", "penis", "cock", "mastorbat",
                   "hentai", "henthai", "hxntai", "hormy", "fuck ne", "masturbat",
                   "sex", "porn", "daddy", "porm", "fuck me", "anal", "buttplug",
                   ":woozy_face:", ":flushed:", ":drooling_face:", "rape"]  # 343591759332245505
 whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634]
-urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4))")
-#just ten more year we solved world hunger
-
+urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4|jpeg))")
 
 
 @client.event
@@ -53,34 +62,33 @@ async def on_ready():
 
 
 def getClassification(img: str):
-    content = urllib.request.urlopen(o7API + '//api/json/graphical/classification/' + img).read()#wow retard use double slash
-    report = json.loads(content)
-    reportActual: dict = {} 
-    if type(report) is dict:
-        return report["error"]
-    for fe in report:
-        reportActual[fe['className']] = float(fe['probability'])
-    return reportActual
+    content = keep_alive.fetch(o7API + '/api/json/graphical/classification/' + img)  
+    return json.loads(content)
 
+#modern problems require modern solution
+#ok i wont bother you
+async def handleReadableContent(message, content: str, value: float, debug: bool):
+  deleted: bool = False
+  msg: str = "confirmed"
+  if value > threshold:
+    await message.delete()
+    deleted = True
+  else:
+    msg = "probably"
+
+  if debug or deleted:
+    await message.channel.send('<@' + str(message.author.id) + f'> your attachment is {msg} to be ** {content} ** :  {str(value)}')
+    
+  return deleted#get moderated
+
+#WTF HAPPENED lmao same
+#wtf i just get tped
 def checkvideotype(name, prefix):
-  filename = name[-len(prefix)-1:]
-  if filename==f'.{prefix}':
-    return True
+    filename = name[-len(prefix) - 1:]
+    if filename == f'.{prefix}':
+        return True
 
-async def WarnUserVideoType(message, sta = {}): 
-  att = message.attachments[0].filename
-  if checkvideotype(att, 'mp4') or checkvideotype(att, 'webm'):
-    await message.channel.send(
-                "<@" + str(message.author.id) + "> bot detected that the attachment u posted is nsfw (definitely)\nAttachment type: " + "video\n" + sta[0] +
-                sta[1] + sta[2] + sta[3])
-  if checkvideotype(att, 'gif'): 
-    await message.channel.send(
-                "<@" + str(message.author.id) + "> bot detected that the attachment u posted is nsfw (definitely)\nAttachment type: " + "gif\n" + sta[0] +
-                sta[1] + sta[2] + sta[3])
-  elif checkvideotype(att, 'png') or checkvideotype(att, 'jpg'):
-    await message.channel.send(
-                "<@" + str(message.author.id) + "> bot detected that the attachment u posted is nsfw (definitely)\nAttachment type: " + "image\n" + sta[0] +
-                sta[1] + sta[2] + sta[3])
+
 def aboveLimit(val: float):
     return val > threshold
 
@@ -114,94 +122,42 @@ async def checkVisual(message):
 
 async def checkVisualF(message, img):
     try:
-        ##get from api
         debug = "debug" in message.content
-        contents = getClassification(img)  # ignorant is a bliss
-        if not type(contents) is dict:
-            if debug:
-                await message.channel.send(contents)
-            return True
-        ##Test shit
-        """
-        top2: list = []
-        top2Value: list = []
-        top2Val: float
-        top2Name: str = ""
-        cont: list = sorted(contents.items(), key=operator.itemgetter(1), reverse=True)
-        for i in range(2):
-         #   top2.append(cont[i][0])
-        #for i in range(2):
-         #   top2Value.append(cont[i][1])
-        #top2Val = top2Value[0] + top2Value[1]
-        #contents["BorderlineHentai"] = (
-        #        contents["Drawing"] * contents["Hentai"] * contents["Hentai"] / contents["Neutral"])
-        # neutralize(contents, "Hentai", "BorderlineHentai")
-        #contents["Digital"] = contents["Porn"] / 1.5 + contents["Neutral"] / 2 + contents["Drawing"] / 1.3
-        # neutralize(contents, "Neutral", "Digital")
-        #contents["Anime"] = (contents["Drawing"] - contents["Hentai"])
-        # neutralize(contents, "Hentai", "BorderlineHentai")
-        #contents["UntrustedDrawing"] = (
-        #        (contents["Sexy"] + contents["Porn"] + contents["Hentai"] + contents["Drawing"]) / 1.5 - contents[
-         #   "Neutral"])
-        #neutralize(contents, "Sexy", "UntrustedDrawing")
-        """
-        sortedReport: list = sorted(contents.items(), key=operator.itemgetter(1), reverse=True)
-        # print(sortedReport)
-        if debug:##Print Details
-            ss: str = ""
-            for subject in sortedReport:  # mfw subject is tuple
-                name: str = subject[0]
-                if subject[1] > threshold:
-                    name = "**Above-Threshold**-**" + name + "**"
-                ss = ss + (name + ": " + str(subject[1])) + "\n"
-            await message.channel.send(ss)
-
-        for sf in safeIndex:
-            if contents[sf] > thresholdMaximizer:
-                return False #it prints out bot detected that the image u posted is nsfw (definitely) even though its video, not image
-        ##Moderate by itzbenz
-        #if contents["BorderlineHentai"] > threshold:
-        #    await message.delete()
-        #    await message.channel.send("<@" + str(message.author.id) + "> Borderline Hentai is not allowed")
-        #    return True
-        #if contents["Anime"] > threshold and debug:  # mfw use distance
-         #   await message.channel.send("<@" + str(message.author.id) + "> is this anime ?")
-        #if contents["Digital"] > threshold and debug:
-            # await message.delete()
-         #   await message.channel.send("<@" + str(message.author.id) + "> a digital generated image ?")
-        # if contents["TransparentPorn"] > threshold:
-        #     await message.delete()
-        #     await message.channel.send("<@" + str(message.author.id) + "> Shady porn")
-        #    return
-        # report = json.loads(contents)
-        # quick use contents['Drawing']/api/json/graphical/classification/
-        
-        ##Nexity shenanigans
-        #std = subprocess.run(['curl', 'https://o7-api.glitch.me//api/json/graphical/classification/' + img],
-         #                    capture_output=True, text=True)
-        #sta = str(std.stdout).split(",")
-        ##checkstring = sta[0] + sta[1] + sta[2] + sta[3]
-        #if "Sexy" in sta[0] or "Porn" in sta[0] or "Hentai" in sta[0]:
-        #    await message.delete()
-        #    await WarnUserVideoType(message, sta)
-        #elif "Sexy" in sta[2] or "Porn" in sta[2] or "Hentai" in sta[2]:
-         #   a = float(sta[1].replace('"probability":', '').replace('}', ''))
-         #   b = float(sta[3].replace('"probability":', '').replace('}', ''))
-         #   if b > 0.25:
-         #       await message.delete()
-          #      await WarnUserVideoType(message, sta)
-         ##       return True
-        #    else:
-         #       await WarnUserVideoType(message, sta)
-         #       return True
-        return False
+        rawResponse: dict = getClassification(img)  # json parser from api
+        contents: dict = rawResponse.copy()
+        contents["model"] = 0
+        contents = dict(sorted(contents.items(), key=operator.itemgetter(1), reverse=True))  # sort float value
+        fancycontent = str(contents).replace(",", "\n").replace("{", "").replace("}", "").replace("'", "").replace(" ", "")
+        readablecontents = fancycontent.split("\n")
+        fixedcontent = ""
+        for gayb in readablecontents:
+            a = gayb.split(":")
+            fixedcontent = fixedcontent + "\n" + a[0] + " : " + a[1]
+        if debug:  # does it good now
+            print("debug")
+            await message.channel.send(fixedcontent + "\n" + str(rawResponse["model"]))
+        #True positive
+        if not debug:
+          print("not debug")
+          for sf in safeIndex:
+             if contents[sf] > thresholdMaximizer:
+                  return False
+        debugThershold: float = thresholdMaximizer - threshold
+        debugThershold = threshold - debugThershold
+        outcome: bool = False
+        for sf in contents.items():##For each item
+            print(str(sf))
+            if neutralIndex.__contains__(sf[0]): continue #if this neutral continue
+            if sf[1] > threshold or (debug and sf[1]> debugThershold):
+                print("exceeded" + sf[0] + str(sf[1]))
+                await handleReadableContent(message, sf[0], sf[1], debug)#Wether to be deleted or not
+                outcome = True #moderated 
+        return outcome #pass moderated
     except Exception as e:
         print("no image found")
         traceback.print_exc()
         print("stackerror: " + str(e))
         return False
-
-    # o hey it works @itzbenz
 
 
 async def basicHandle(message):
@@ -215,7 +171,7 @@ async def basicHandle(message):
     print("^^---------------------------------------------^^")
     if message.content == "test":
         await message.channel.send("aliven't")
-    if message.author.id in whitelisted_users:
+    if message.author.id in whitelisted_users or message.author.id == 343591759332245505:
         if message.content == "restartbot":
             await message.channel.send("restarting")
             restart_program()
@@ -225,8 +181,6 @@ async def basicHandle(message):
 async def checkSpam(message):
     global isSpamAllowed
     print("the spam : " + str(isSpamAllowed))
-    # hey @itzbenz am I on crack or is it not returning and stil deleting
-    # it shows the spam : 1 but it still deletes the message
     if isSpamAllowed == 1:
         return False
     try:
@@ -234,7 +188,7 @@ async def checkSpam(message):
             await message.delete()
             # channel = await message.author.create_dm()
             # await channel.send("stop spamming")
-            # do i need to block the bots
+            # do i need to block the bots  |  yes you do
             return True
     except:
         print("oh noes")
@@ -246,12 +200,15 @@ async def checkSpam(message):
 @client.event
 async def on_message(message):
     global isSpamAllowed
-    if message.author.id == 0:
-      await message.delete()
+    global isTextCensorEnabled
+    if message.author.id == 0:  # if you hate someone really bad and you cant ban him from a server because the state doesnt let you
+        await message.delete()
+
     if message.author.bot:
         return
-        # DONT DELETE
-    await basicHandle(message)  # please dont delete this
+    # DONT DELETE
+    await basicHandle(message)
+
     if message.content == "switchspam":
         if message.author.id in whitelisted_users or message.author.id == 343591759332245505:
             if isSpamAllowed:
@@ -264,17 +221,37 @@ async def on_message(message):
                 with open("spamsettings.txt", "w+") as f:
                     f.write(str(isSpamAllowed))
                 await message.channel.send("turned off antispam")
+
+    if message.content == "switchtextcensor":
+        if message.author.id in whitelisted_users or message.author.id == 343591759332245505:
+            if isTextCensorEnabled:
+                isTextCensorEnabled = 0
+                with open("textcensorsettings.txt", "w+") as f:
+                    f.write(str(isTextCensorEnabled))
+                await message.channel.send("turned on chat censor")
+            else:
+                isTextCensorEnabled = 1
+                with open("textcensorsettings.txt", "w+") as f:
+                    f.write(str(isTextCensorEnabled))
+                await message.channel.send("turned off chat censor")
+
     if "is AFK" in message.content and message.author.id == 155149108183695360:
         await message.delete()
+
     if message.author.id in whitelisted_users and not str(message.content).startswith("debug"):
         return
+
     if not message.content == "debug":
         if await checkSpam(message):
             return
+
     if await checkVisual(message):
         return
+
     for words in censored_words:
         if message.channel.nsfw:
+            return
+        if isTextCensorEnabled == 1:
             return
         msg = message.content.lower().replace("0", "o").replace("4", "a").replace("3", "e").replace("@", "o").replace(
             "1", "l").replace(".", "").replace(" ", "")
