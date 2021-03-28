@@ -73,7 +73,7 @@ async def handleReadableContent(message, content: str, value: float, debug: bool
   if value > threshold:
     if badIndex.__contains__(value):
       await message.delete()
-    deleted = True
+      deleted = True
   else:
     msg = "probably"
 
