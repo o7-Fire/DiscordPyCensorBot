@@ -40,7 +40,7 @@ o7API = "https://o7-api.glitch.me"  # choose your api
 client = discord.Client()  # finally migrated to o7inc.ddns.net api
 spam = {}
 maxhandleReadableContent = 0.25  # 0 - 1. read async def handleReadableContent
-threshold = 0.6  # anything higher than this get vetoed
+threshold = 0.62  # anything higher than this get vetoed
 thresholdMinimizer = 0.25  # to sum up with other value
 thresholdNeutralizer = 0.017  # round to 0 automatically
 thresholdMaximizer = 0.81  # if the index above this and is safe dont delete
@@ -50,7 +50,7 @@ badIndex = ["Porn", "Sexy", "Hentai", "Anime"]
 censored_words = ["suck me", "suck ne", "masterbat",
                   "horny", "lesbian", "bisexual", "vagina", "penis", "cock", "mastorbat",
                   "hentai", "henthai", "hxntai", "hormy", "fuck ne", "masturbat",
-                  "sex", "porn", "daddy", "porm", "fuck me", "anal", "buttplug",
+                  "lets sex", "porn", "daddy", "porm", "fuck me", "anal", "buttplug",
                   ":woozy_face:", ":flushed:", ":drooling_face:", "rape"]  # 343591759332245505
 whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634]
 urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4|jpeg))")
@@ -68,18 +68,20 @@ def getClassification(img: str):
 #weeb problems require weeb solution
 async def handleReadableContent(message, content: str, value: float, debug: bool):
   deleted: bool = False
-  msg: str = "contained"
+  msg: str = "contain"
+  aftercontent: str = ""
   print(str(value) + " > " + str(threshold))
   if value > threshold:
     if badIndex.__contains__(content):#keep shit simple
         await message.delete()
         deleted = True
+        aftercontent = aftercontent + " and moderated"
   else:
     msg = "probably " + msg
   if debug: #fuck you
     msg = " is red pilled and " + msg
   if deleted or debug:
-      await message.channel.send('<@' + str(message.author.id) + f'> We have found that your attachment {msg} ** {content} ** :  {str(value)}')
+      await message.channel.send('<@' + str(message.author.id) + f'> We have found that your attachment {msg} ** {content} **{aftercontent} :  {str(value)}')
   return deleted#get moderated
 
 #WTF HAPPENED lmao same
