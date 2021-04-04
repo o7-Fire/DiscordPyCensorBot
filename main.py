@@ -1,17 +1,20 @@
 import traceback
 
 import keep_alive
-
 keep_alive.keep_alive()
+
+import dialogflow
+from google.api_core.exceptions import InvalidArgument
 import os
 import discord
 import unicodedata
 import json
 import sys
 import urllib.request
+import requests
 import operator
 import re
-
+from monkeylearn import MonkeyLearn
 
 def restart_program():
     python = sys.executable
@@ -33,6 +36,7 @@ except FileNotFoundError:
 
 print("VALUE OF ISSPAMALLOWED: " + str(isSpamAllowed))
 print("VALUE OF ISTEXTCENSORENABLED: " + str(isTextCensorEnabled))
+ml = MonkeyLearn(os.getenv('ML_TOKEN'))
 TOKEN = os.getenv('BOT_TOKEN')  # for now use glitch api since volas having problem
 ##https://o7-api.glitch.me
 ##https://o7inc.ddns.net
@@ -55,6 +59,11 @@ censored_words = ["suck me", "suck ne", "masterbat",
 whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634]
 urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4|jpeg))")
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'private_key.json'
+
+DIALOGFLOW_PROJECT_ID = os.getenv('PROJECT_ID')
+DIALOGFLOW_LANGUAGE_CODE = 'en'
+SESSION_ID = 'me'
 
 @client.event
 async def on_ready():
@@ -173,7 +182,7 @@ async def basicHandle(message):
         a = 0
     print("^^---------------------------------------------^^")
     if message.content == "test":
-        await message.channel.send("aliven't")
+        await message.channel.send("assadn't")
     if message.author.id in whitelisted_users or message.author.id == 343591759332245505:
         if message.content == "restartbot":
             await message.channel.send("restarting")
@@ -199,6 +208,44 @@ async def checkSpam(message):
         spam[message.author.id] = message.content.lower()
     return False
 
+async def handleBot(message):
+ if message.channel.id == 815743358639013958:
+      contents = requests.get(f'https://api.affiliateplus.xyz/api/chatbot?message={message.content}&botname=o7 AI Bot&ownername=Nexity&user=1').text
+      cleanup = contents.split(":")[1].replace('"', "").replace("}", "")
+      await message.channel.send(cleanup)
+
+async def handleText(message):
+  content = message.content
+  model_id = 'cl_fobQ7iGo'
+  data = [content]
+  result = ml.classifiers.classify(model_id, data)
+  for items in result.body:
+    for item in items['classifications']:
+      #await message.channel.send(str(item) + str(type(item)))
+      if item['tag_name'] == "NSFW":
+        await message.channel.send(f'<@{message.author.id}> Your message was detected to be {item["tag_name"]}\nProbability {item["confidence"]}')
+        
+async def handleTextG(message):
+  text_to_be_analyzed = message.content
+
+  session_client = dialogflow.SessionsClient()
+  session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
+  text_input = dialogflow.types.TextInput(text=text_to_be_analyzed, language_code=DIALOGFLOW_LANGUAGE_CODE)
+  query_input = dialogflow.types.QueryInput(text=text_input)
+  try:
+      response = session_client.detect_intent(session=session, query_input=query_input)
+  except InvalidArgument:
+      raise
+
+  if response.query_result.intent.display_name == "NSFW intent":
+    if response.query_result.intent_detection_confidence > 0.5:
+      await message.delete()
+      await message.channel.send(f"""<@{message.author.id}> Your message was checked and is probably NSFW
+Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
+    else:
+      await message.channel.send(f"""<@{message.author.id}> Your message was checked and is maybe NSFW
+Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
+
 
 @client.event
 async def on_message(message):
@@ -211,6 +258,12 @@ async def on_message(message):
         return
     # DONT DELETE
     await basicHandle(message)
+    await handleBot(message)
+    #try:
+    #  await handleText(message)
+    #except:
+    #  a = 1
+    await handleTextG(message)
 
     if message.content == "switchspam":
         if message.author.id in whitelisted_users or message.author.id == 343591759332245505:
@@ -251,16 +304,16 @@ async def on_message(message):
     if await checkVisual(message):
         return
 
-    for words in censored_words:
-        if message.channel.nsfw:
-            return
-        if isTextCensorEnabled == 1:
-            return
-        msg = message.content.lower().replace("0", "o").replace("4", "a").replace("3", "e").replace("@", "o").replace(
-            "1", "l").replace(".", "").replace(" ", "")
-        if words in unicodedata.normalize('NFKC', msg):
-            await message.delete()
-            await message.channel.send("get censored")
+    #for words in censored_words:
+        #if message.channel.nsfw:
+        #    return
+        #if isTextCensorEnabled == 1:
+        #    return
+        #msg = message.content.lower().replace("0", "o").replace("4", "a").replace("3", "e").replace("@", "o").replace(
+        #    "1", "l").replace(".", "").replace(" ", "")
+        #if words in unicodedata.normalize('NFKC', msg):
+        #    await message.delete()
+        #    await message.channel.send("get censored")
 
 
 if __name__ == '__main__':

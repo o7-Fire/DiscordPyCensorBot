@@ -11,6 +11,8 @@ flask = "^1.1.2"
 wikipedia = "^1.4.0"
 chatbot-py = "^2.74"
 chatterbot-voice = "^0.1.5"
+monkeylearn = "^3.5.2"
+dialogflow = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 
