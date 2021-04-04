@@ -2,7 +2,7 @@ import traceback
 
 import keep_alive
 keep_alive.keep_alive()
-
+##assad your private key is exposed
 import dialogflow
 from google.api_core.exceptions import InvalidArgument
 import os
@@ -58,8 +58,6 @@ censored_words = ["suck me", "suck ne", "masterbat",
                   ":woozy_face:", ":flushed:", ":drooling_face:", "rape"]  # 343591759332245505
 whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634]
 urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4|jpeg))")
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'private_key.json'
 
 DIALOGFLOW_PROJECT_ID = os.getenv('PROJECT_ID')
 DIALOGFLOW_LANGUAGE_CODE = 'en'
@@ -226,6 +224,20 @@ async def handleText(message):
         await message.channel.send(f'<@{message.author.id}> Your message was detected to be {item["tag_name"]}\nProbability {item["confidence"]}')
         
 async def handleTextG(message):
+  try:
+    f = open("private_key.json", "r")
+    os.remove("private_key.json")
+    mayb = requests.get(os.getenv('PRIVATE_KEY_LINK'))
+    with open('private_key.json', 'a') as f:
+      f.write(mayb.text)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'private_key.json'
+  except IOError:
+    mayb = requests.get(os.getenv('PRIVATE_KEY_LINK'))
+    with open('private_key.json', 'a') as f:
+      f.write(mayb.text)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'private_key.json'
+  finally:
+    f.close()
   text_to_be_analyzed = message.content
 
   session_client = dialogflow.SessionsClient()
@@ -236,7 +248,6 @@ async def handleTextG(message):
       response = session_client.detect_intent(session=session, query_input=query_input)
   except InvalidArgument:
       raise
-
   if response.query_result.intent.display_name == "NSFW intent":
     if response.query_result.intent_detection_confidence > 0.5:
       await message.delete()
@@ -245,6 +256,7 @@ Detected intent confidence:  {response.query_result.intent_detection_confidence}
     else:
       await message.channel.send(f"""<@{message.author.id}> Your message was checked and is maybe NSFW
 Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
+  os.remove("private_key.json")
 
 
 @client.event
