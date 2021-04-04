@@ -51,6 +51,11 @@ thresholdMaximizer = 0.81  # if the index above this and is safe dont delete
 safeIndex = ["Neutral"]  # prevent false positive, never trust Drawing
 neutralIndex = ['Neutral']#Not worth checking
 badIndex = ["Porn", "Sexy", "Hentai", "Anime"]
+censored_words = ["suck me", "suck ne", "masterbat",
+                  "horny", "lesbian", "bisexual", "vagina", "penis", "cock", "mastorbat",
+                  "hentai", "henthai", "hxntai", "hormy", "fuck ne", "masturbat",
+                  "lets sex", "porn", "daddy", "porm", "fuck me", "anal", "buttplug",
+                  ":woozy_face:", ":flushed:", ":drooling_face:", "rape"]  # 343591759332245505
 whitelisted_users = [7706075274265231707, 753874678220849174, 332394297536282634]
 urlDiscordMedia = re.compile("((https|http):\/\/[0-9a-zA-Z\.\/_-]+.(png|jpg|gif|webm|mp4|jpeg))")
 
@@ -206,47 +211,34 @@ async def handleBot(message):
       contents = requests.get(f'https://api.affiliateplus.xyz/api/chatbot?message={message.content}&botname=o7 AI Bot&ownername=Nexity&user=1').text
       cleanup = contents.split(":")[1].replace('"', "").replace("}", "")
       await message.channel.send(cleanup)
+
+async def handleText(message):
+  content = message.content
+  model_id = 'cl_fobQ7iGo'
+  data = [content]
+  result = ml.classifiers.classify(model_id, data)
+  for items in result.body:
+    for item in items['classifications']:
+      #await message.channel.send(str(item) + str(type(item)))
+      if item['tag_name'] == "NSFW":
+        await message.channel.send(f'<@{message.author.id}> Your message was detected to be {item["tag_name"]}\nProbability {item["confidence"]}')
         
 async def handleTextG(message):
-  try:
-    f = open("private_key.json", "r")
-    os.remove("private_key.json")
-    mayb = requests.get(os.getenv('PRIVATE_KEY_LINK'))
-    with open('private_key.json', 'a') as f:
-      f.write(mayb.text)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'private_key.json'
-  except IOError:
-    mayb = requests.get(os.getenv('PRIVATE_KEY_LINK'))
-    with open('private_key.json', 'a') as f:
-      f.write(mayb.text)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'private_key.json'
-  finally:
-    f.close()
-  text_to_be_analyzed = message.content
-
-  session_client = dialogflow.SessionsClient()
-  session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
-  text_input = dialogflow.types.TextInput(text=text_to_be_analyzed, language_code=DIALOGFLOW_LANGUAGE_CODE)
-  query_input = dialogflow.types.QueryInput(text=text_input)
-  try:
-      response = session_client.detect_intent(session=session, query_input=query_input)
-  except InvalidArgument:
-      raise
-  if response.query_result.intent.display_name == "NSFW intent":
-    if response.query_result.intent_detection_confidence > 0.5:
+  r = requests.get(f'https://o7-hub-bot.nexitysecond.repl.co/api/nsfwclassify?text={message.content}').text
+  e = r.replace("'", "").split(', ')
+  intent = e[1].replace("intent: ", "")
+  confidence = e[2].replace("confidence: ", "").replace("}", "")
+  if intent == "NSFW intent":
+    if float(confidence) > 0.5:
       await message.delete()
       await message.channel.send(f"""<@{message.author.id}> Your message was checked and is probably NSFW
-Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
-      # FEEDBACK
-      try:
-        asd = client.get_channel(0123456789012345)
-        await asd.send(f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}\n```channel: {message.channel.name} ({message.channel.id})\nmessage: {message.content}\nintent confidence: {response.query_result.intent_detection_confidence}```")
-      except:
-        print("It seems as you did not set a channel for feedback. Invite this bot to a server, find a channel for the feedback, and change the client.get_channel(0123456789012345) to the channel id.")
+Detected intent confidence:  {confidence}""")
+      asd = client.get_channel(828189106911182898)
+      #print(message.links)https://discord.com/channels/651737864593211394/801061985034305556/828195273992962058
+      await asd.send(f"<@343591759332245505> https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}\n```channel: {message.channel.name} ({message.channel.id})\nmessage: {message.content}\nintent confidence: {confidence}```")
     else:
       await message.channel.send(f"""<@{message.author.id}> Your message was checked and is maybe NSFW
-Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
-  os.remove("private_key.json")
+Detected intent confidence:  {confidence}""")
 
 
 @client.event
@@ -261,6 +253,10 @@ async def on_message(message):
     # DONT DELETE
     await basicHandle(message)
     await handleBot(message)
+    #try:
+    #  await handleText(message)
+    #except:
+    #  a = 1
     await handleTextG(message)
 
     if message.content == "switchspam":
@@ -301,6 +297,18 @@ async def on_message(message):
 
     if await checkVisual(message):
         return
+
+    #for words in censored_words:
+        #if message.channel.nsfw:
+        #    return
+        #if isTextCensorEnabled == 1:
+        #    return
+        #msg = message.content.lower().replace("0", "o").replace("4", "a").replace("3", "e").replace("@", "o").replace(
+        #    "1", "l").replace(".", "").replace(" ", "")
+        #if words in unicodedata.normalize('NFKC', msg):
+        #    await message.delete()
+        #    await message.channel.send("get censored")
+
 
 if __name__ == '__main__':
     client.run(TOKEN)
