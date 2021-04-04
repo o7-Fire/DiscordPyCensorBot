@@ -219,7 +219,7 @@ async def handleText(message):
         await message.channel.send(f'<@{message.author.id}> Your message was detected to be {item["tag_name"]}\nProbability {item["confidence"]}')
         
 async def handleTextG(message):
-  r = requests.get(f'https://o7-hub-bot.nexitysecond.repl.co/api/nsfwclassify?text={message.content}').text
+  r = requests.get(f'https://api.nexitysecond.repl.co/nsfwclassify?text={message.content}').text
   e = r.replace("'", "").split(', ')
   intent = e[1].replace("intent: ", "")
   confidence = e[2].replace("confidence: ", "").replace("}", "")
