@@ -253,6 +253,9 @@ async def handleTextG(message):
       await message.delete()
       await message.channel.send(f"""<@{message.author.id}> Your message was checked and is probably NSFW
 Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
+      asd = client.get_channel(828189106911182898)
+      #print(message.links)https://discord.com/channels/651737864593211394/801061985034305556/828195273992962058
+      await asd.send(f"<@343591759332245505> https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}\n```channel: {message.channel.name} ({message.channel.id})\nmessage: {message.content}\nintent confidence: {response.query_result.intent_detection_confidence}```")
     else:
       await message.channel.send(f"""<@{message.author.id}> Your message was checked and is maybe NSFW
 Detected intent confidence:  {response.query_result.intent_detection_confidence}""")
