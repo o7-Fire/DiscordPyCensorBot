@@ -240,7 +240,7 @@ Detected intent confidence:  {response.query_result.intent_detection_confidence}
       # FEEDBACK
       try:
         asd = client.get_channel(0123456789012345)
-        await asd.send(f"<@343591759332245505> https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}\n```channel: {message.channel.name} ({message.channel.id})\nmessage: {message.content}\nintent confidence: {response.query_result.intent_detection_confidence}```")
+        await asd.send(f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}\n```channel: {message.channel.name} ({message.channel.id})\nmessage: {message.content}\nintent confidence: {response.query_result.intent_detection_confidence}```")
       except:
         print("It seems as you did not set a channel for feedback. Invite this bot to a server, find a channel for the feedback, and change the client.get_channel(0123456789012345) to the channel id.")
     else:
