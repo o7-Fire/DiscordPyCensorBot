@@ -40,7 +40,7 @@ ml = MonkeyLearn(os.getenv('ML_TOKEN'))
 TOKEN = os.getenv('BOT_TOKEN')  # for now use glitch api since volas having problem
 ##https://o7-api.glitch.me
 ##https://o7inc.ddns.net
-o7API = "https://o7-api.glitch.me"  # choose your api
+o7API = "https://o7-nsfw-api.glitch.me"  # choose your api
 client = discord.Client()  # finally migrated to o7inc.ddns.net api
 spam = {}
 maxhandleReadableContent = 0.25  # 0 - 1. read async def handleReadableContent
